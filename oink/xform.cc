@@ -408,24 +408,24 @@ void AddrTaken_ASTVisitor::registerUltimateVariable(Expression *expr) {
     }
   } else if (expr->isE_deref()) {
     Expression *expr2 = expr->asE_deref()->ptr;
-    if (!expr2->isE_binary()) {
-      // if an E_addrOf of an E_deref results in a variable having its
-      // address taken, then the variable's address was already taken
-      // in the first place somewhere else and stored in a variable,
-      // unless it is an immediate array plus an int (a lowered array
-      // dereference)
-    }
-    E_binary *ebin = expr2->asE_binary();
-    if (ebin->op == BIN_PLUS) {
-      // NOTE: BIN_BRACKETS becomes this
-      bool const leftIsArray = ebin->e1->type->asRval()->isArrayType();
-      bool const rightIsInt = ebin->e2->type->asRval()->isIntegerType();
-      if (leftIsArray) {
-        xassert(rightIsInt);    // how can this not be?
-        registerUltimateVariable(ebin->e1);
+    // if an E_addrOf of an E_deref results in a variable having its
+    // address taken, then the variable's address was already taken in
+    // the first place somewhere else and stored in a variable, unless
+    // it is an immediate array plus an int (a lowered array
+    // dereference)
+    if (expr2->isE_binary()) {
+      E_binary *ebin = expr2->asE_binary();
+      if (ebin->op == BIN_PLUS) {
+	// NOTE: BIN_BRACKETS becomes this
+	bool const leftIsArray = ebin->e1->type->asRval()->isArrayType();
+	bool const rightIsInt = ebin->e2->type->asRval()->isIntegerType();
+	if (leftIsArray) {
+	  xassert(rightIsInt);    // how can this not be?
+	  registerUltimateVariable(ebin->e1);
+	}
+      } else {
+	xfailure("how can you deref this kind of binary expr?");
       }
-    } else {
-      xfailure("how can you deref this kind of binary expr?");
     }
   } else if (expr->isE_cond()) {
     // gcc complains, but it still lets you do it:
@@ -708,17 +708,21 @@ subVisitS_return(S_return *obj) {
   std::string retStr = patcher.getRange(ret_UnboxedPairLoc);
 
   // build the replacement
+  bool changed = false;
   stringBuilder newRet;
   newRet << "{";
   SFOREACH_OBJLIST(S_compound_Scope, scopeStack.list, iter) {
     SFOREACH_OBJLIST(Variable, iter.data()->s_decl_vars.list, iter2) {
       newRet << xformCmd->free_func << "(" << iter2.data()->name << ");";
+      changed = true;
     }
   }
   newRet << retStr.c_str() << "}";
 
   // replace it
-  patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc, /*recursive*/true);
+  if (changed) {
+    patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc, /*recursive*/true);
+  }
   return true;
 }
 
