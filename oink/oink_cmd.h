@@ -43,6 +43,7 @@ class OinkCmd {
   ASTList<File> inputFilesFlat; // flattened into just a list of filenames
   std::string control; // control the cqual processing in a fine-grained way
   std::string func_filter; // filter out the listed Variables and their AST
+  std::string mod_spec_prefix;	// prefix for -o-mod-spec filenames
 
   bool help;                    // print help message and exit
   bool verbose;                 // dump state before proceeding

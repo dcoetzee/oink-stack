@@ -114,6 +114,7 @@ OinkCmd::OinkCmd()
 
   , control              ()
   , func_filter          ()
+  , mod_spec_prefix      ()
 
   , help                 (false)
   , verbose              (false)
@@ -230,6 +231,12 @@ void OinkCmd::readOneArg(int &argc, char **&argv) {
   if (streq(arg, "-o-func-filter")) {
     shift(argc, argv);
     func_filter = shift(argc, argv);
+    return;
+  }
+
+  if (streq(arg, "-o-mod-spec-prefix")) {
+    shift(argc, argv);
+    mod_spec_prefix = shift(argc, argv);
     return;
   }
 
@@ -392,6 +399,7 @@ void OinkCmd::dump() { // for -fo-verbose
   }
   printf("o-control: %s\n", control.c_str());
   printf("o-func-filter: %s\n", func_filter.c_str());
+  printf("o-mod-spec-prefix: %s\n", mod_spec_prefix.c_str());
   printf("o-mod-spec, moduleList:\n");
   SFOREACH_OBJLIST(char, moduleList, iter) {
     std::cout << "\t" << iter.data() << std::endl;
@@ -464,6 +472,7 @@ void OinkCmd::printHelp() {
      "  -o-mod-spec MOD@MOD_FILE : give a module and a module file "
      "                             containing filenames\n"
      "                             to be associated with that module\n"
+     "  -o-mod-spec-prefix PATH  : prefix for -o-mod-spec filenames\n"
      "  -o-mod-default MOD       : give a module to be used when"
      "                             no mod-spec applies\n"
      "  -o-srz FILE              : serialize to FILE\n"
@@ -588,7 +597,9 @@ void OinkCmd::initializeFromFlags() {
 }
 
 void OinkCmd::regModuleImmediate(char const *filename, StringRef module) {
-  filename = globalStrTable(filename);
+  std::string prefixedFilename(mod_spec_prefix);
+  prefixedFilename += filename;
+  filename = globalStrTable(prefixedFilename.c_str());
   std::cout << "adding to modules map: " << filename
             << " -> " << module
             << std::endl;

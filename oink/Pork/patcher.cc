@@ -8,6 +8,9 @@
 #include <sstream>
 #include <map>
 
+// Defined in oink.cc
+extern void printLoc(SourceLoc loc, std::ostream &out);
+
 // **** UnboxedLoc
 
 StringRef UnboxedLoc::set(SourceLoc loc) {
@@ -27,7 +30,16 @@ SourceLoc UnboxedLoc::toSourceLoc(StringRef file) {
 // **** UnboxedPairLoc
 
 UnboxedPairLoc::UnboxedPairLoc(PairLoc const &pairLoc) {
-  xassert(pairLoc.hasExactPosition());
+  if (!pairLoc.first_ref().hasExactPosition()) {
+    printLoc(pairLoc.first_ref().loc(), std::cerr);
+    std::cerr << "UnboxedPairLoc::UnboxedPairLoc(): pairLoc.first does not have exact position." << std::endl;
+    exit(1);
+  }
+  if (!pairLoc.second_ref().hasExactPosition()) {
+    printLoc(pairLoc.second_ref().loc(), std::cerr);
+    std::cerr << "UnboxedPairLoc::UnboxedPairLoc(): pairLoc.second does not have exact position." << std::endl;
+    exit(1);
+  }
   this->file = first.set(pairLoc.first.loc());
 
   if (pairLoc.first.loc() == pairLoc.second.loc()) {
@@ -329,10 +341,25 @@ void Patcher::printPatch(std::string const &str, UnboxedPairLoc const &loc,
     }
     if (recursive) {
       // assert that other is within loc
-      xassert((minLine < otherMinLine 
+      if (!((minLine < otherMinLine 
                || (minLine == otherMinLine && minCol <= otherMinCol))
               && (maxLine > otherMaxLine 
-                  || (maxLine == otherMaxLine && maxCol >= otherMaxCol)));
+                  || (maxLine == otherMaxLine && maxCol >= otherMaxCol)))) {
+	std::cerr << file << ":";
+	std::cerr << loc.first.line << ":";
+	std::cerr << loc.first.col;
+	std::cerr << " to ";
+	std::cerr << loc.second.line << ":";
+	std::cerr << loc.second.col;
+	std::cerr << " has collision with existing location ";
+	std::cerr << other.first.line << ":";
+	std::cerr << other.first.col;
+	std::cerr << " to ";
+	std::cerr << other.second.line << ":";
+	std::cerr << other.second.col;
+	std::cerr << std::endl;
+	exit(1);
+      }
       // then delete other
       output.erase(it);
       // afaik there is no way to erase from a map and continue

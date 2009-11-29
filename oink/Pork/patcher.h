@@ -117,6 +117,14 @@ public:
       ? first.macroExpansion
       : second.macroExpansion;
   }
+
+  CPPSourceLoc const & first_ref() const {
+    return first;
+  }
+
+  CPPSourceLoc const & second_ref() const {
+    return second;
+  }
 };
 
 // **** UnboxedPairLoc

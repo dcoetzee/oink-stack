@@ -47,7 +47,7 @@ static void printPatch
   CPPSourceLoc ploc_end(end);
   PairLoc pairLoc(ploc, ploc_end);
   UnboxedPairLoc unboxedPairLoc(pairLoc);
-  patcher.printPatch(str, unboxedPairLoc);
+  patcher.printPatch(str, unboxedPairLoc, /*recursive*/true);
 }
 
 static bool dynSize(Type *type, SourceLoc loc) {
@@ -718,7 +718,7 @@ subVisitS_return(S_return *obj) {
   newRet << retStr.c_str() << "}";
 
   // replace it
-  patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc);
+  patcher.printPatch(newRet.c_str(), ret_UnboxedPairLoc, /*recursive*/true);
   return true;
 }
 
@@ -879,7 +879,7 @@ xformDeclarator(Declarator *obj) {
     UnboxedPairLoc init_UnboxedPairLoc(init_PairLoc);
     oldInit_c_str = strdup(patcher.getRange(init_UnboxedPairLoc).c_str());
     // replace the old initializer with the new one
-    patcher.printPatch(newInit.c_str(), init_UnboxedPairLoc);
+    patcher.printPatch(newInit.c_str(), init_UnboxedPairLoc, /*recursive*/true);
   } else {
     // add the new initializer
     stringBuilder newInit2;
@@ -889,7 +889,7 @@ xformDeclarator(Declarator *obj) {
 //     // yes, replace the empty range
 //     PairLoc decltor_end_PairLoc(decltor_ploc_end, decltor_ploc_end);
 //     UnboxedPairLoc decltor_end_UnboxedPairLoc(decltor_end_PairLoc);
-//     patcher.printPatch(newInit2.c_str(), decltor_end_UnboxedPairLoc);
+//     patcher.printPatch(newInit2.c_str(), decltor_end_UnboxedPairLoc, /*recursive*/true);
   }
 
   // fix the D_name; note: the below doesn't work due to the inability
@@ -898,7 +898,7 @@ xformDeclarator(Declarator *obj) {
 //   patcher.insertBefore(dname_ploc_end, ")");
   stringBuilder newInnerIDecl;
   newInnerIDecl << "(*" << var->name << ")";
-  patcher.printPatch(newInnerIDecl.c_str(), dname_UnboxedPairLoc);
+  patcher.printPatch(newInnerIDecl.c_str(), dname_UnboxedPairLoc, /*recursive*/true);
 
   return oldInit_c_str;
 }
@@ -945,7 +945,7 @@ subVisitE_variable(E_variable *evar) {
     UnboxedPairLoc evar_UnboxedPairLoc(evar_PairLoc);
     stringBuilder newEvar;
     newEvar << "(*" << var->name << ")";
-    patcher.printPatch(newEvar.c_str(), evar_UnboxedPairLoc);
+    patcher.printPatch(newEvar.c_str(), evar_UnboxedPairLoc, /*recursive*/true);
   }
   return true;
 }
@@ -1323,7 +1323,7 @@ void IntroFunCall_ASTVisitor::postvisitExpression(Expression *obj) {
 //           << callStr.c_str()
 //           << "})";
 //   // replace it
-//   patcher.printPatch(newCall.c_str(), call_UnboxedPairLoc);
+//   patcher.printPatch(newCall.c_str(), call_UnboxedPairLoc, /*recursive*/true);
 }
 
 // **** Jimmy_ASTVisitor
